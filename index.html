@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BBO Tracker</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f5;color:#111;min-height:100vh}
+  .app{max-width:520px;margin:0 auto;padding:16px 14px 60px}
+  .top-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+  .logo-sub{font-size:9px;letter-spacing:3px;color:#999;margin-bottom:2px;font-weight:500}
+  .logo-main{font-size:26px;font-weight:700;color:#111;line-height:1;letter-spacing:-0.5px}
+  .logo-main span{color:#d4537e}
+  .new-btn{background:#d4537e;color:#fff;border:none;border-radius:10px;padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap}
+  .new-btn:active{opacity:0.85}
+  .tabs-wrap{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:12px;-webkit-overflow-scrolling:touch}
+  .tabs-wrap::-webkit-scrollbar{display:none}
+  .tab{font-size:12px;font-weight:500;background:#fff;border:1.5px solid #e0e0e0;border-radius:20px;padding:7px 13px;cursor:pointer;color:#777;white-space:nowrap;display:flex;align-items:center;gap:5px;flex-shrink:0}
+  .tab.active{border-color:#d4537e;color:#d4537e;background:#fff5f8}
+  .tab-x{font-size:15px;color:#bbb;line-height:1;margin-left:2px}
+  .event-header{background:#fff;border-radius:14px;padding:12px 14px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;border:1px solid #eee}
+  .ev-name{font-weight:600;font-size:15px;color:#111}
+  .ev-date{font-size:11px;color:#d4537e;margin-top:2px;font-weight:500}
+  .ev-nodate{font-size:11px;color:#bbb;margin-top:2px}
+  .edit-ev-btn{font-size:11px;font-weight:600;color:#888;background:#f5f5f5;border:none;border-radius:8px;padding:6px 11px;cursor:pointer}
+  .countdown{background:#fff5f8;border-radius:10px;padding:8px 14px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;border:1px solid #fde0ea}
+  .cd-lbl{font-size:10px;letter-spacing:2px;color:#d4537e;font-weight:600}
+  .cd-val{font-size:15px;font-weight:700;color:#d4537e}
+  .stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+  .stat{background:#fff;border-radius:12px;padding:10px 12px;cursor:pointer;border:1.5px solid #eee}
+  .stat.ac{border-color:#1d9e75}
+  .stat.am{border-color:#ba7517}
+  .stat.ah{border-color:#d4537e}
+  .stat-n{font-size:28px;font-weight:700;line-height:1;margin-bottom:2px}
+  .stat-n.c{color:#1d9e75}.stat-n.m{color:#ba7517}.stat-n.h{color:#d4537e}
+  .stat-lbl{font-size:9px;letter-spacing:1.5px;color:#aaa;font-weight:600}
+  .add-box{background:#fff;border-radius:14px;padding:14px;margin-bottom:12px;border:1px solid #eee}
+  .add-lbl{font-size:9px;letter-spacing:2px;color:#d4537e;font-weight:700;margin-bottom:10px}
+  .add-fields{display:flex;flex-direction:column;gap:8px}
+  .add-fields input,.add-fields select{font-size:15px;padding:11px 13px;border:1.5px solid #e8e8e8;border-radius:10px;background:#fafafa;color:#111;outline:none;width:100%;-webkit-appearance:none;appearance:none}
+  .add-fields input:focus,.add-fields select:focus{border-color:#d4537e;background:#fff}
+  .add-btn{background:#d4537e;color:#fff;border:none;border-radius:10px;padding:13px;font-size:15px;font-weight:700;cursor:pointer;width:100%}
+  .add-btn:active{opacity:0.85}
+  .filter-row{display:flex;gap:6px;margin-bottom:8px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .filter-row::-webkit-scrollbar{display:none}
+  .fbtn{font-size:11px;font-weight:600;background:#fff;border:1.5px solid #e0e0e0;border-radius:20px;padding:6px 13px;cursor:pointer;color:#888;white-space:nowrap;flex-shrink:0}
+  .fbtn.fa{border-color:#333;color:#333}
+  .fbtn.fc{border-color:#1d9e75;color:#1d9e75;background:#f0fdf7}
+  .fbtn.fm{border-color:#ba7517;color:#ba7517;background:#fffbf0}
+  .fbtn.fh{border-color:#d4537e;color:#d4537e;background:#fff5f8}
+  .search-inp{font-size:14px;padding:10px 13px;border:1.5px solid #e8e8e8;border-radius:10px;background:#fafafa;color:#111;outline:none;width:100%;margin-bottom:10px}
+  .search-inp:focus{border-color:#d4537e;background:#fff}
+  .section-lbl{font-size:9px;letter-spacing:2px;color:#bbb;font-weight:600;margin-bottom:8px;padding-left:2px}
+  .plist{display:flex;flex-direction:column;gap:8px}
+  .pcard{background:#fff;border-radius:14px;padding:13px 14px;border:1px solid #eee}
+  .pcard-top{display:flex;align-items:flex-start;gap:10px}
+  .pdot{width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:4px}
+  .pdot.confirmed{background:#1d9e75}.pdot.maybe{background:#ba7517}.pdot.hitup{background:#d4537e}
+  .pinfo{flex:1;min-width:0}
+  .pname{font-weight:600;font-size:15px;color:#111}
+  .pnote{font-size:12px;color:#999;margin-top:2px}
+  .pno-note{font-size:11px;color:#ccc;margin-top:2px;font-style:italic}
+  .pbtns{display:flex;gap:4px;flex-shrink:0;align-items:center}
+  .tbtn{font-size:12px;font-weight:600;background:#f5f5f5;border:1.5px solid #e8e8e8;border-radius:7px;padding:5px 8px;cursor:pointer;color:#999}
+  .tbtn.tc{color:#1d9e75;border-color:#1d9e75;background:#f0fdf7}
+  .tbtn.tm{color:#ba7517;border-color:#ba7517;background:#fffbf0}
+  .tbtn.th{color:#d4537e;border-color:#d4537e;background:#fff5f8}
+  .pencil-btn{font-size:13px;background:#f5f5f5;border:1.5px solid #e8e8e8;border-radius:7px;padding:5px 8px;cursor:pointer;color:#888}
+  .pencil-btn.open{border-color:#d4537e;color:#d4537e;background:#fff5f8}
+  .del-btn{font-size:18px;background:none;border:none;color:#ccc;cursor:pointer;padding:3px 5px;line-height:1}
+  .del-btn:active{color:#d4537e}
+  .edit-panel{margin-top:11px;padding-top:11px;border-top:1px solid #f0f0f0;display:flex;flex-direction:column;gap:8px}
+  .edit-panel input{font-size:14px;padding:10px 12px;border:1.5px solid #e8e8e8;border-radius:10px;background:#fafafa;color:#111;outline:none;width:100%}
+  .edit-panel input:focus{border-color:#d4537e;background:#fff}
+  .ep-actions{display:flex;gap:7px}
+  .ep-save{background:#d4537e;color:#fff;border:none;border-radius:9px;padding:10px 16px;font-size:14px;font-weight:700;cursor:pointer;flex:1}
+  .ep-cancel{background:#f5f5f5;border:none;border-radius:9px;padding:10px 14px;font-size:14px;color:#888;cursor:pointer}
+  .empty{text-align:center;padding:40px 0;color:#bbb;font-size:14px}
+  .no-events{text-align:center;padding:60px 20px}
+  .ne-title{font-size:18px;font-weight:700;color:#111;margin-bottom:8px}
+  .ne-sub{font-size:14px;color:#999;margin-bottom:20px}
+  .ne-btn{background:#d4537e;color:#fff;border:none;border-radius:12px;padding:14px 24px;font-size:15px;font-weight:700;cursor:pointer}
+  .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.45);display:flex;align-items:flex-end;justify-content:center;z-index:999}
+  .modal{background:#fff;border-radius:20px 20px 0 0;padding:24px 20px 40px;width:100%;max-width:520px}
+  .modal-handle{width:40px;height:4px;background:#e0e0e0;border-radius:2px;margin:0 auto 20px}
+  .modal-title{font-size:18px;font-weight:700;color:#111;margin-bottom:16px}
+  .modal-lbl{font-size:11px;letter-spacing:1px;font-weight:600;color:#999;margin-bottom:6px;margin-top:14px}
+  .modal input{font-size:15px;padding:12px 14px;border:1.5px solid #e8e8e8;border-radius:11px;background:#fafafa;color:#111;outline:none;width:100%}
+  .modal input:focus{border-color:#d4537e;background:#fff}
+  .modal-actions{display:flex;gap:8px;margin-top:20px}
+  .m-save{background:#d4537e;color:#fff;border:none;border-radius:11px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;flex:1}
+  .m-cancel{background:#f5f5f5;border:none;border-radius:11px;padding:14px 18px;font-size:15px;color:#888;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <div class="top-bar">
+    <div>
+      <div class="logo-sub">BAD BITCHES ONLY</div>
+      <div class="logo-main">TRACKER <span>●</span></div>
+    </div>
+    <button class="new-btn" onclick="openNewModal()">+ New Event</button>
+  </div>
+  <div class="tabs-wrap" id="tabs"></div>
+  <div id="main"></div>
+</div>
+
+<div class="modal-bg" id="modalBg" style="display:none" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="modalTitle">New event</div>
+    <div class="modal-lbl">EVENT NAME</div>
+    <input id="mName" type="text" placeholder="Baddie IRL, After Hours..." />
+    <div class="modal-lbl">DATE & TIME</div>
+    <input id="mDate" type="datetime-local" />
+    <div class="modal-actions">
+      <button class="m-save" id="mSaveBtn" onclick="saveModal()">Create</button>
+      <button class="m-cancel" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SEED = [{
+  id:'evt_seed', name:'Comfy Studios Podcast', date:'', filter:'all',
+  people:[
+    {id:101,name:'mssslee',          note:'',                                           status:'hitup',     added:'May 5'},
+    {id:102,name:'MILKTHEMERMAID',   note:'',                                           status:'hitup',     added:'May 5'},
+    {id:103,name:'LOUGOTCASH',       note:'',                                           status:'hitup',     added:'May 5'},
+    {id:104,name:'JARON LOVE CABIN', note:'HE MAY FLY OUT',                            status:'maybe',     added:'May 5'},
+    {id:105,name:'JOTATTS',          note:'MAYBE HE HAS TO CALL OUT',                  status:'maybe',     added:'May 5'},
+    {id:106,name:'BRIOKLYN HONEY',   note:'4:30',                                      status:'confirmed', added:'May 5'},
+    {id:107,name:'STASSY',           note:'',                                           status:'hitup',     added:'May 5'},
+    {id:108,name:'CHUNKY',           note:'',                                           status:'hitup',     added:'May 5'},
+    {id:109,name:'NOLITA',           note:'4:30 TIME SLOT',                            status:'confirmed', added:'May 5'},
+    {id:110,name:'CHANEL CARDI C',   note:'HIT UP',                                    status:'hitup',     added:'May 5'},
+    {id:111,name:'SUMLII',           note:'NEEDS RIDE',                                status:'confirmed', added:'May 5'},
+    {id:112,name:'VERNAZHE',         note:'2 PM AND NEEDS WHITE — LET HIM BUY IT SHIRT', status:'confirmed', added:'May 5'}
+  ]
+}];
+
+let data = null;
+try { data = JSON.parse(localStorage.getItem('bbo-art-v2')||'null'); } catch(e){}
+if (!data) data = {events:JSON.parse(JSON.stringify(SEED)), activeId:'evt_seed'};
+data.events.forEach(e=>{if(!e.filter)e.filter='all';});
+
+let modalMode='new', editEvId=null, expandedId=null;
+
+function save(){localStorage.setItem('bbo-art-v2',JSON.stringify(data));}
+function active(){return data.events.find(e=>e.id===data.activeId)||data.events[0]||null;}
+function switchEvent(id){expandedId=null;data.activeId=id;save();render();}
+
+function openNewModal(){
+  modalMode='new';
+  document.getElementById('modalTitle').textContent='New event';
+  document.getElementById('mSaveBtn').textContent='Create';
+  document.getElementById('mName').value='';
+  document.getElementById('mDate').value='';
+  document.getElementById('modalBg').style.display='flex';
+  setTimeout(()=>document.getElementById('mName').focus(),100);
+}
+function openEditEvModal(id){
+  const ev=data.events.find(e=>e.id===id);if(!ev)return;
+  modalMode='edit';editEvId=id;
+  document.getElementById('modalTitle').textContent='Edit event';
+  document.getElementById('mSaveBtn').textContent='Save';
+  document.getElementById('mName').value=ev.name;
+  document.getElementById('mDate').value=ev.date||'';
+  document.getElementById('modalBg').style.display='flex';
+}
+function closeModal(){document.getElementById('modalBg').style.display='none';}
+function saveModal(){
+  const name=document.getElementById('mName').value.trim()||'Untitled Event';
+  const date=document.getElementById('mDate').value;
+  if(modalMode==='new'){
+    const id='evt_'+Date.now();
+    data.events.push({id,name,date,filter:'all',people:[]});
+    data.activeId=id;
+  } else {
+    const ev=data.events.find(e=>e.id===editEvId);
+    if(ev){ev.name=name;ev.date=date;}
+  }
+  save();closeModal();render();
+}
+function deleteEvent(id){
+  if(data.events.length<=1){data.events[0].people=[];save();render();return;}
+  data.events=data.events.filter(e=>e.id!==id);
+  if(data.activeId===id)data.activeId=data.events[0].id;
+  save();render();
+}
+function addPerson(){
+  const ev=active();if(!ev)return;
+  const name=document.getElementById('iName').value.trim();
+  if(!name){document.getElementById('iName').focus();return;}
+  const note=document.getElementById('iNote').value.trim();
+  const status=document.getElementById('iStatus').value;
+  ev.people.unshift({id:Date.now(),name,note,status,added:new Date().toLocaleDateString('en-US',{month:'short',day:'numeric'})});
+  save();
+  document.getElementById('iName').value='';
+  document.getElementById('iNote').value='';
+  document.getElementById('iStatus').value='hitup';
+  render();
+}
+function changeStatus(evId,pId,s){
+  const ev=data.events.find(e=>e.id===evId);if(!ev)return;
+  const p=ev.people.find(p=>p.id===pId);if(!p)return;
+  p.status=s;save();render();
+}
+function delPerson(evId,pId){
+  const ev=data.events.find(e=>e.id===evId);if(!ev)return;
+  ev.people=ev.people.filter(p=>p.id!==pId);
+  if(expandedId===pId)expandedId=null;
+  save();render();
+}
+function toggleEdit(pId){
+  expandedId=expandedId===pId?null:pId;
+  render();
+  if(expandedId){setTimeout(()=>{const el=document.getElementById('eName_'+pId);if(el)el.focus();},50);}
+}
+function savePerson(evId,pId){
+  const ev=data.events.find(e=>e.id===evId);if(!ev)return;
+  const p=ev.people.find(p=>p.id===pId);if(!p)return;
+  const n=document.getElementById('eName_'+pId);
+  const no=document.getElementById('eNote_'+pId);
+  if(n&&n.value.trim())p.name=n.value.trim();
+  if(no)p.note=no.value.trim();
+  expandedId=null;save();render();
+}
+function setFilter(f){const ev=active();if(!ev)return;ev.filter=f;save();render();}
+function countdown(ds){
+  if(!ds)return null;
+  const diff=Math.ceil((new Date(ds)-new Date())/86400000);
+  if(diff<0)return null;
+  return diff===0?'TODAY':diff+(diff===1?' day':' days');
+}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+function render(){
+  document.getElementById('tabs').innerHTML=data.events.map(ev=>{
+    const conf=ev.people.filter(p=>p.status==='confirmed').length;
+    return `<div class="tab ${ev.id===data.activeId?'active':''}" onclick="switchEvent('${ev.id}')">
+      ${esc(ev.name)}${conf>0?` <span style="font-size:10px;opacity:0.7">(${conf}✓)</span>`:''}
+      <span class="tab-x" onclick="event.stopPropagation();if(confirm('Remove event?'))deleteEvent('${ev.id}')">×</span>
+    </div>`;
+  }).join('');
+
+  const main=document.getElementById('main');
+  const ev=active();
+  if(!ev){
+    main.innerHTML=`<div class="no-events"><div class="ne-title">No events yet</div><div class="ne-sub">Create your first event</div><button class="ne-btn" onclick="openNewModal()">+ Create Event</button></div>`;
+    return;
+  }
+
+  const cd=countdown(ev.date);
+  const f=ev.filter||'all';
+  const q=(document.getElementById('qSearch')||{}).value||'';
+  const nC=ev.people.filter(p=>p.status==='confirmed').length;
+  const nM=ev.people.filter(p=>p.status==='maybe').length;
+  const nH=ev.people.filter(p=>p.status==='hitup').length;
+  let dStr='';
+  if(ev.date){const d=new Date(ev.date);dStr=d.toLocaleDateString('en-US',{month:'short',day:'numeric'})+' · '+d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});}
+
+  const filtered=ev.people.filter(p=>(f==='all'||p.status===f)&&(!q||p.name.toLowerCase().includes(q.toLowerCase())||(p.note||'').toLowerCase().includes(q.toLowerCase())));
+  const lbls={all:'ALL PEOPLE',confirmed:'CONFIRMED',maybe:'MAYBE',hitup:'HIT UP'};
+
+  const cards=filtered.length===0?'<div class="empty">Nobody here yet</div>':filtered.map(p=>{
+    const open=expandedId===p.id;
+    return `<div class="pcard">
+      <div class="pcard-top">
+        <div class="pdot ${p.status}"></div>
+        <div class="pinfo">
+          <div class="pname">${esc(p.name)}</div>
+          ${p.note?`<div class="pnote">${esc(p.note)}</div>`:`<div class="pno-note">tap ✏ to add note</div>`}
+        </div>
+        <div class="pbtns">
+          <button class="tbtn ${p.status==='confirmed'?'tc':''}" onclick="changeStatus('${ev.id}',${p.id},'confirmed')">✓</button>
+          <button class="tbtn ${p.status==='maybe'?'tm':''}" onclick="changeStatus('${ev.id}',${p.id},'maybe')">?</button>
+          <button class="tbtn ${p.status==='hitup'?'th':''}" onclick="changeStatus('${ev.id}',${p.id},'hitup')">→</button>
+          <button class="pencil-btn ${open?'open':''}" onclick="toggleEdit(${p.id})">✏</button>
+          <button class="del-btn" onclick="delPerson('${ev.id}',${p.id})">×</button>
+        </div>
+      </div>
+      ${open?`<div class="edit-panel">
+        <input id="eName_${p.id}" type="text" value="${esc(p.name)}" placeholder="Name" />
+        <input id="eNote_${p.id}" type="text" value="${esc(p.note)}" placeholder="Note — ride, time slot, context..." />
+        <div class="ep-actions">
+          <button class="ep-save" onclick="savePerson('${ev.id}',${p.id})">Save</button>
+          <button class="ep-cancel" onclick="toggleEdit(${p.id})">Cancel</button>
+        </div>
+      </div>`:''}
+    </div>`;
+  }).join('');
+
+  main.innerHTML=`
+    <div class="event-header">
+      <div>
+        <div class="ev-name">${esc(ev.name)}</div>
+        ${dStr?`<div class="ev-date">${dStr}</div>`:`<div class="ev-nodate">Tap EDIT to set date</div>`}
+      </div>
+      <button class="edit-ev-btn" onclick="openEditEvModal('${ev.id}')">EDIT</button>
+    </div>
+    ${cd?`<div class="countdown"><span class="cd-lbl">DAYS OUT</span><span class="cd-val">${cd}</span></div>`:''}
+    <div class="stats-row">
+      <div class="stat ${f==='confirmed'?'ac':''}" onclick="setFilter('confirmed')"><div class="stat-n c">${nC}</div><div class="stat-lbl">CONFIRMED</div></div>
+      <div class="stat ${f==='maybe'?'am':''}" onclick="setFilter('maybe')"><div class="stat-n m">${nM}</div><div class="stat-lbl">MAYBE</div></div>
+      <div class="stat ${f==='hitup'?'ah':''}" onclick="setFilter('hitup')"><div class="stat-n h">${nH}</div><div class="stat-lbl">HIT UP</div></div>
+    </div>
+    <div class="add-box">
+      <div class="add-lbl">+ ADD PERSON</div>
+      <div class="add-fields">
+        <input id="iName" type="text" placeholder="Name or @handle" onkeydown="if(event.key==='Enter')addPerson()" />
+        <input id="iNote" type="text" placeholder="Note — last DM, needs ride..." />
+        <select id="iStatus">
+          <option value="hitup">→ Hit Up</option>
+          <option value="maybe">? Maybe</option>
+          <option value="confirmed">✓ Confirmed</option>
+        </select>
+        <button class="add-btn" onclick="addPerson()">ADD</button>
+      </div>
+    </div>
+    <div class="filter-row">
+      <button class="fbtn ${f==='all'?'fa':''}" onclick="setFilter('all')">All</button>
+      <button class="fbtn ${f==='confirmed'?'fc':''}" onclick="setFilter('confirmed')">✓ Confirmed</button>
+      <button class="fbtn ${f==='maybe'?'fm':''}" onclick="setFilter('maybe')">? Maybe</button>
+      <button class="fbtn ${f==='hitup'?'fh':''}" onclick="setFilter('hitup')">→ Hit Up</button>
+    </div>
+    <input class="search-inp" id="qSearch" type="text" placeholder="Search..." value="${esc(q)}" oninput="render()" />
+    <div class="section-lbl">${lbls[f]}</div>
+    <div class="plist">${cards}</div>`;
+}
+
+render();
+</script>
+</body>
+</html>
